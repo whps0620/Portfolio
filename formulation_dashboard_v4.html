@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Formulation VF Dashboard</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥢</text></svg>">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#eef1f6;color:#1a202c;min-height:100vh}
+
+header{
+  background:#1a202c;color:#fff;padding:14px 28px;
+  display:flex;align-items:center;justify-content:space-between;
+  box-shadow:0 2px 8px rgba(0,0,0,.25)
+}
+header h1{font-size:1.2rem;font-weight:600;letter-spacing:-.01em}
+header .sub{font-size:.75rem;opacity:.45;margin-top:2px}
+.reset-btn{
+  padding:7px 15px;background:rgba(255,255,255,.1);
+  border:1px solid rgba(255,255,255,.2);border-radius:7px;
+  font-size:.8rem;cursor:pointer;color:#fff;transition:background .2s
+}
+.reset-btn:hover{background:rgba(255,255,255,.2)}
+
+.dash{max-width:1460px;margin:0 auto;padding:20px;display:grid;gap:16px}
+.top{display:grid;grid-template-columns:390px 1fr 265px;gap:16px;align-items:start}
+.card{background:#fff;border-radius:12px;box-shadow:0 1px 5px rgba(0,0,0,.08);padding:18px}
+.card-title{
+  font-size:.72rem;font-weight:700;color:#94a3b8;
+  text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px
+}
+
+/* ── COMPOSITION BAR ── */
+.comp-bar-wrap{margin-bottom:10px}
+.comp-bar-label{font-size:.68rem;color:#aaa;margin-bottom:4px}
+#comp-bar{
+  width:100%;height:36px;border-radius:6px;overflow:hidden;
+  display:flex;border:1px solid rgba(0,0,0,.06)
+}
+.comp-seg{
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;transition:width .4s ease;flex-shrink:0
+}
+.comp-seg span{
+  font-size:9px;font-weight:700;white-space:nowrap;
+  text-shadow:0 1px 2px rgba(0,0,0,.4);pointer-events:none;
+  padding:0 2px
+}
+
+/* ── CANVAS ── */
+canvas{display:block;width:354px;height:310px;border-radius:8px;border:1.5px solid #e5e9f0}
+
+/* ── LEGEND ── */
+.legend{display:grid;grid-template-columns:1fr 1fr;gap:3px 10px;margin-top:11px}
+.li{display:flex;align-items:center;gap:5px;font-size:.72rem;color:#4b5563}
+.lchip{flex-shrink:0;border:1px solid rgba(0,0,0,.1)}
+
+/* ── TABLE ── */
+.ftable{width:100%;border-collapse:collapse;font-size:.82rem}
+.ftable th{
+  font-size:.7rem;font-weight:600;color:#9ca3af;
+  padding:5px 8px;border-bottom:2px solid #f0f2f5;
+  text-align:left;white-space:nowrap
+}
+.ftable td{padding:4px 8px;border-bottom:1px solid #f7f8fa;vertical-align:middle}
+.ftable tbody tr:hover td{background:#fafbfc}
+.ing-label{display:flex;align-items:center;gap:7px}
+.nchip{flex-shrink:0;border:1px solid rgba(0,0,0,.1)}
+.cinput{display:flex;align-items:center;gap:5px}
+.cinput input[type=range]{width:88px;height:3px;cursor:pointer;accent-color:#3b82f6}
+.cinput input[type=number]{
+  width:54px;padding:2px 5px;border:1.5px solid #e2e8f0;border-radius:5px;
+  font-size:.8rem;text-align:center;outline:none;font-family:inherit
+}
+.cinput input[type=number]:focus{border-color:#3b82f6;box-shadow:0 0 0 2px rgba(59,130,246,.15)}
+.pct-lbl{font-size:.74rem;color:#cbd5e1}
+.fat-row td{color:#aaa;font-style:italic;background:#fafbfc}
+.tot-row{
+  margin-top:11px;padding:7px 11px;border-radius:8px;font-size:.81rem;
+  display:flex;justify-content:space-between;align-items:center;transition:background .3s
+}
+.ok{background:#d1fae5;color:#065f46}
+.warn{background:#fee2e2;color:#991b1b}
+
+/* ── VF CARD ── */
+.vf-card{display:flex;flex-direction:column;align-items:center;padding:30px 18px;gap:10px;text-align:center}
+.vf-num{
+  font-size:4rem;font-weight:700;line-height:1;
+  font-variant-numeric:tabular-nums;color:#1a202c;transition:color .3s
+}
+.vf-num .unit{font-size:1.8rem;color:#94a3b8;font-weight:400}
+.vf-sub{font-size:.75rem;color:#94a3b8}
+.vf-track{width:100%;height:11px;background:#e5e7eb;border-radius:6px;overflow:hidden}
+.vf-fill{
+  height:100%;border-radius:6px;
+  background:linear-gradient(90deg,#3b82f6,#6366f1,#dc2626);
+  transition:width .5s cubic-bezier(.4,0,.2,1)
+}
+.vf-range{font-size:.7rem;color:#c4c9d4}
+.oor{
+  display:none;font-size:.74rem;padding:8px 10px;width:100%;
+  background:#fffbeb;border:1px solid #fbbf24;border-radius:7px;color:#78350f;text-align:left
+}
+
+/* ── WORKFLOW ── */
+.wf{display:flex;align-items:stretch;flex-wrap:wrap;gap:0}
+.ws{
+  background:#1e293b;color:#fff;padding:10px 16px;border-radius:8px;
+  font-size:.81rem;font-weight:500;text-align:center;flex-shrink:0
+}
+.ws-sub{font-size:.66rem;opacity:.55;margin-top:3px}
+.ws.active{background:#3b82f6}
+.wa{font-size:1.1rem;color:#94a3b8;padding:0 8px;display:flex;align-items:center;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="sub">Internship · DoE Linear Model · w/v basis</div>
+    <h1>Formulation Void Fraction Dashboard</h1>
+  </div>
+  <button class="reset-btn" onclick="resetAll()">↺ Reset to defaults</button>
+</header>
+
+<div class="dash">
+  <div class="top">
+
+    <!-- ═══ PREVIEW CARD ═══ -->
+    <div class="card">
+      <div class="card-title">Blend Preview</div>
+
+      <!-- Composition bar: accurate proportions at a glance -->
+      <div class="comp-bar-wrap">
+        <div class="comp-bar-label">Volume composition</div>
+        <div id="comp-bar"></div>
+      </div>
+
+      <!-- Particle cross-section: morphology + relative sizes -->
+      <canvas id="cvs" width="708" height="620"></canvas>
+
+      <div class="legend" id="lgd"></div>
+    </div>
+
+    <!-- ═══ FORMULATION TABLE ═══ -->
+    <div class="card">
+      <div class="card-title">Formulation (w/v %)</div>
+      <table class="ftable">
+        <thead>
+          <tr>
+            <th>Group</th>
+            <th>Particle Size (dv50)</th>
+            <th>Ingredient</th>
+            <th>Content (%)</th>
+            <th>Morphology</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div class="tot-row ok" id="totbar">
+        <span>Total: <strong id="totpct">—</strong></span>
+        <span id="totstatus">✓ Valid</span>
+      </div>
+    </div>
+
+    <!-- ═══ VF CARD ═══ -->
+    <div class="card vf-card">
+      <div class="card-title">Void Fraction</div>
+      <div class="vf-num" id="vfnum">—<span class="unit">%</span></div>
+      <div class="vf-sub">DoE Linear Model Prediction</div>
+      <div class="vf-track"><div class="vf-fill" id="vffill" style="width:0"></div></div>
+      <div class="vf-range">Model range: ~25 – 40%</div>
+      <div class="oor" id="oor">⚠️ One or more inputs are outside the DoE design space — prediction may be extrapolated.</div>
+    </div>
+
+  </div>
+
+  <!-- ═══ WORKFLOW ═══ -->
+  <div class="card">
+    <div class="card-title">Model Building Workflow</div>
+    <div class="wf">
+      <div class="ws"><div>PSD Library</div><div class="ws-sub">Clusters A–I defined</div></div>
+      <div class="wa">→</div>
+      <div class="ws"><div>Historical Database</div><div class="ws-sub">Trial records</div></div>
+      <div class="wa">→</div>
+      <div class="ws"><div>Design of Experiment</div><div class="ws-sub">DoE_wVF.jrp · Basket trial</div></div>
+      <div class="wa">→</div>
+      <div class="ws active"><div>Linear Model</div><div class="ws-sub">VF = f(A…I) + interactions</div></div>
+      <div class="wa">→</div>
+      <div class="ws active"><div>This Dashboard</div><div class="ws-sub">Interactive prediction</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// INGREDIENT DEFINITIONS
+//   rMean / rStd  : display radius (CSS px) drawn from normal dist.
+//   rMin / rMax   : hard clamps on particle radius
+//   Span rules    : low Span → small rStd; high Span → large rStd
+//   Size hierarchy: H > G,F > D,E > C1,C2 > B  (matches dv50 clusters)
+// ═══════════════════════════════════════════════════════════════════
+const INGS = [
+  { id:'A',  name:'Flavouring Powder',  min:2,  max:12, def:7,
+    color:'#E07020', shape:'irregular',
+    rMean:9,  rStd:7,   rMin:2,  rMax:20,   // Span>3.2 → very broad
+    cv:7,   sv:5,    morph:'Irregular (Span>3.2)',     dv50:'Variable' },
+
+  { id:'B',  name:'Corn Starch',        min:0,  max:25, def:12.5,
+    color:'#C0960A', shape:'circle',
+    rMean:3,  rStd:0.6, rMin:1.5,rMax:5,    // smallest cluster
+    cv:12.5,sv:12.5, morph:'Fine spherical',            dv50:'< 20 μm' },
+
+  { id:'C1', name:'Potato Starch',      min:0,  max:5,  def:0,
+    color:'#D4B070', shape:'circle',
+    rMean:6,  rStd:1,   rMin:3,  rMax:9,
+    cv:12.5,sv:12.5, morph:'Spherical',                 dv50:'20–51 μm' },
+
+  { id:'C2', name:'Savoury Extract',    min:0,  max:5,  def:2.5,
+    color:'#8B3A1A', shape:'circle',
+    rMean:6,  rStd:1,   rMin:3,  rMax:9,
+    cv:2.5, sv:2.5,  morph:'Spherical',                 dv50:'20–51 μm' },
+
+  { id:'D',  name:'Umami Extract',      min:0,  max:12, def:6,
+    color:'#D48808', shape:'circle',
+    rMean:10, rStd:1.5, rMin:6,  rMax:14,   // Span<2 → narrow
+    cv:6,   sv:6,    morph:'Spherical (Span<2)',         dv50:'51–120 μm' },
+
+  { id:'E',  name:'Colouring Powder',   min:0,  max:5,  def:2.5,
+    color:'#EAC000', shape:'irregular',
+    rMean:10, rStd:4,   rMin:4,  rMax:18,   // Span≥2 → wide
+    cv:2.5, sv:2.5,  morph:'Variable spherical',         dv50:'51–120 μm' },
+
+  { id:'F',  name:'Herb Extract',       min:0,  max:8,  def:4,
+    color:'#4A7A18', shape:'circle',
+    rMean:15, rStd:2,   rMin:9,  rMax:21,   // Span<2 → narrow
+    cv:4,   sv:4,    morph:'Large spherical (Span<2)',   dv50:'120–350 μm' },
+
+  { id:'G',  name:'Seed Powder',        min:0,  max:8,  def:4,
+    color:'#1A7830', shape:'irregular',
+    rMean:15, rStd:5,   rMin:6,  rMax:24,   // Span≥2 → wide
+    cv:4,   sv:4,    morph:'Large irregular',             dv50:'120–350 μm' },
+
+  { id:'H',  name:'Salt',               min:30, max:70, def:50,
+    color:'#CC1133', shape:'cubic',
+    rMean:24, rStd:6,   rMin:11, rMax:38,   // largest cluster, wide crystal size
+    cv:50,  sv:20,   morph:'Cubic',                      dv50:'> 350 μm' },
+
+  { id:'I',  name:'MSG',                min:0,  max:17, def:8.5,
+    color:'#2244CC', shape:'needle',
+    rMean:11, rStd:3,   rMin:6,  rMax:18,   // rMean encodes needle length
+    cv:8.5, sv:8.5,  morph:'Needle-like',                dv50:'MSG-specific' },
+];
+
+const DISPLAY_ORDER = ['I','H','G','F','E','D','C2','C1','B','A'];
+const ING_MAP = {};
+INGS.forEach(g => ING_MAP[g.id] = g);
+const FAT_COLOR = '#E0D4A8';
+
+// ═══════════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════════
+const S = {};
+INGS.forEach(g => S[g.id] = g.def);
+
+// ═══════════════════════════════════════════════════════════════════
+// VF MODEL  (from DoE_wVF.jrp — coefficients unchanged)
+// ═══════════════════════════════════════════════════════════════════
+function vfModel(s) {
+  const n = {};
+  INGS.forEach(g => n[g.id] = (s[g.id] - g.cv) / g.sv);
+  const {A,B,C1,C2,D,E,F,G,H,I} = n;
+  let v = 0.3051260347;
+  v += 0.0008839632*A; v += -0.01781786*B;  v += -0.018948524*C1;
+  v += 0.0024351004*C2;v += 0.0075559117*D; v += 0.0033066579*E;
+  v += -0.0050753*F;   v += -0.000633541*G; v += -0.028160715*H;
+  v += 0.005260517*I;
+  v += A*H*(-0.006433058);  v += A*I*(-0.00526893);
+  v += B*D*(-0.012596789);  v += B*F*(-0.004332597);
+  v += B*G*(-0.004216976);  v += B*H*(-0.020667611);
+  v += B*I*(-0.008871984);  v += C1*H*(-0.011343284);
+  v += C2*G*(-0.003354372); v += C2*H*(-0.00668643);
+  return v;
+}
+
+function isOOR(s) {
+  return INGS.some(g => (parseFloat(s[g.id])||0)<g.min || (parseFloat(s[g.id])||0)>g.max);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// RANDOM UTILITIES
+// ═══════════════════════════════════════════════════════════════════
+function mkRng(seed) {
+  let s = ((Math.floor(Math.abs(seed)) % 233280) + 1);
+  return () => { s=(s*9301+49297)%233280; return s/233280; };
+}
+function randN(mu, sigma, rng) {                    // Box-Muller
+  const u1=Math.max(1e-10,rng()), u2=rng();
+  return mu + sigma*Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2);
+}
+function clamp(v,lo,hi){ return Math.max(lo,Math.min(hi,v)); }
+function isLight(hex) {
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return (r*.299+g*.587+b*.114)>160;
+}
+// Lighten (f>1) or darken (f<1) a hex colour for 3-D shading
+function adjColor(hex, f) {
+  const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  return `rgb(${Math.min(255,Math.round(r*f))},${Math.min(255,Math.round(g*f))},${Math.min(255,Math.round(b*f))})`;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// COMPOSITION BAR  (div-based, above canvas)
+// ═══════════════════════════════════════════════════════════════════
+function buildCompBar() {
+  const bar = document.getElementById('comp-bar');
+  bar.innerHTML = '';
+
+  let tot = 0;
+  INGS.forEach(g => tot += Math.max(0, parseFloat(S[g.id])||0));
+  const fat   = Math.max(0, 100 - tot);
+  const grand = tot + fat;
+  if (grand <= 0) return;
+
+  // Segments in display order, fat at end
+  const segments = DISPLAY_ORDER.map(id => ({
+    id, color: ING_MAP[id].color, v: Math.max(0, parseFloat(S[id])||0)
+  }));
+  if (fat > 0) segments.push({ id:'Fat', color: FAT_COLOR, v: fat });
+
+  segments.forEach(seg => {
+    if (seg.v <= 0) return;
+    const pct = seg.v / grand * 100;
+    const div = document.createElement('div');
+    div.className = 'comp-seg';
+    div.style.width      = pct + '%';
+    div.style.background = seg.color;
+    div.title = `${seg.id}: ${seg.v.toFixed(1)}%`;
+
+    if (pct >= 5) {
+      const txt = document.createElement('span');
+      txt.textContent = `${seg.id} ${Math.round(seg.v)}%`;
+      txt.style.color = isLight(seg.color) ? '#333' : '#fff';
+      div.appendChild(txt);
+    }
+    bar.appendChild(div);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// PARTICLE CANVAS  — greedy-packed cross-section
+// ═══════════════════════════════════════════════════════════════════
+const CVS_W = 354, CVS_H = 310;   // CSS px
+let dpr = 1;
+
+function initCanvas() {
+  const cvs = document.getElementById('cvs');
+  dpr = window.devicePixelRatio || 1;
+  cvs.width  = CVS_W * dpr;
+  cvs.height = CVS_H * dpr;
+  cvs.style.width  = CVS_W + 'px';
+  cvs.style.height = CVS_H + 'px';
+}
+
+// Greedy packing: place particles largest-first, find non-overlapping spots.
+// Uses squared distances to avoid expensive sqrt in the inner loop.
+function packParticles(particles, W, H, rng) {
+  // Sort by radius descending (large particles claim space first)
+  particles.sort((a, b) => b.r - a.r);
+  const placed = [];
+
+  for (const p of particles) {
+    const margin = p.r;                        // particles may touch the canvas edge
+    const xRange = W - 2 * margin;
+    const yRange = H - 2 * margin;
+    if (xRange <= 0 || yRange <= 0) { p.x = W/2; p.y = H/2; placed.push(p); continue; }
+
+    let bestX = margin + rng() * xRange;
+    let bestY = margin + rng() * yRange;
+    let bestPenalty = Infinity;
+
+    for (let attempt = 0; attempt < 350; attempt++) {
+      const tx = margin + rng() * xRange;
+      const ty = margin + rng() * yRange;
+      let penalty = 0;
+
+      for (const q of placed) {
+        const dx = tx - q.x, dy = ty - q.y;
+        const distSq = dx*dx + dy*dy;
+        const minD   = p.r + q.r;             // exact contact — particles touch
+        const minDSq = minD * minD;
+        if (distSq < minDSq) {
+          penalty += (minDSq - distSq);
+        }
+      }
+
+      if (penalty === 0) { bestX = tx; bestY = ty; bestPenalty = 0; break; }
+      if (penalty < bestPenalty) { bestX = tx; bestY = ty; bestPenalty = penalty; }
+    }
+
+    p.x = bestX;
+    p.y = bestY;
+    placed.push(p);
+  }
+  return placed;
+}
+
+let rafPending = false;
+function scheduleRedraw() {
+  if (!rafPending) {
+    rafPending = true;
+    requestAnimationFrame(() => { drawCanvas(); rafPending = false; });
+  }
+}
+
+function drawCanvas() {
+  const cvs = document.getElementById('cvs');
+  const ctx  = cvs.getContext('2d');
+  const W = cvs.width, H = cvs.height;
+
+  // Fat background
+  ctx.fillStyle = FAT_COLOR;
+  ctx.fillRect(0, 0, W, H);
+
+  // ── Compute totals
+  let tot = 0;
+  INGS.forEach(g => tot += Math.max(0, parseFloat(S[g.id])||0));
+  if (tot <= 0) return;
+
+  // ── Particle count per ingredient
+  //    weight_i = content_i / rMean_i^0.8  balances large vs small
+  //    so that: 50% salt (r=24) gets many more particles than 4% herb extract (r=15)
+  //    r^0.6 balances large vs small: salt (50%, r=24) ~= corn starch (12.5%, r=3) in count
+  //    so salt dominates visually through SIZE, not sheer numbers
+  const MAX_P = 115;
+  let sumW = 0;
+  const wts = {};
+  INGS.forEach(g => {
+    const v = Math.max(0, parseFloat(S[g.id])||0);
+    if (v <= 0) { wts[g.id] = 0; return; }
+    const effR = g.shape === 'needle' ? 7 : g.rMean;
+    wts[g.id] = v / Math.pow(effR, 0.6);
+    sumW += wts[g.id];
+  });
+
+  // ── Seeded RNG — separate seeds for size/shape vs position
+  const shapeSeed = INGS.reduce((a,g) => a + Math.round(S[g.id]*10)*(g.id.charCodeAt(0)+1), 0);
+  const posSeed   = shapeSeed * 7 + 31337;
+  const shapeRng  = mkRng(shapeSeed);
+  const posRng    = mkRng(posSeed);
+
+  // ── Build particle list (sizes + shapes drawn from distributions)
+  const particles = [];
+  INGS.forEach(g => {
+    const v = Math.max(0, parseFloat(S[g.id])||0);
+    if (v <= 0 || wts[g.id] <= 0) return;
+
+    const count = Math.max(1, Math.round(wts[g.id] / sumW * MAX_P));
+
+    for (let i = 0; i < count; i++) {
+      const r   = clamp(randN(g.rMean, g.rStd, shapeRng), g.rMin, g.rMax) * dpr;
+      const ang = shapeRng() * Math.PI * 2;
+      const irr = [shapeRng(),shapeRng(),shapeRng(),shapeRng(),
+                   shapeRng(),shapeRng(),shapeRng(),shapeRng()];
+      particles.push({ r, ang, irr, g, x:0, y:0 });
+    }
+  });
+
+  // ── Greedy pack (uses posRng for position attempts)
+  packParticles(particles, W, H, posRng);
+
+  // ── Draw particles (paint small ones first so large ones sit on top)
+  particles.sort((a,b) => a.r - b.r);
+
+  for (const p of particles) {
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.ang);
+    ctx.lineWidth = 0.7 * dpr;
+
+    ctx.fillStyle   = p.g.color;
+    ctx.strokeStyle = 'rgba(0,0,0,0.20)';
+
+    switch (p.g.shape) {
+
+      case 'cubic': {
+        const aspect = 0.7 + 0.6 * p.irr[0];
+        const sw = p.r * 1.5, sh = p.r * aspect;
+        ctx.fillRect(-sw/2, -sh/2, sw, sh);
+        ctx.strokeRect(-sw/2, -sh/2, sw, sh);
+        break;
+      }
+
+      case 'needle': {
+        const nl = p.r * 1.8, nw = 3 * dpr;
+        ctx.beginPath();
+        ctx.roundRect(-nl/2, -nw/2, nl, nw, nw/2);
+        ctx.fill(); ctx.stroke();
+        break;
+      }
+
+      case 'irregular': {
+        const nv = 5 + Math.floor(p.irr[0] * 4);
+        ctx.beginPath();
+        for (let k = 0; k < nv; k++) {
+          const a  = (k / nv) * Math.PI * 2;
+          const rv = p.r * (0.52 + 0.55 * p.irr[k % p.irr.length]);
+          k === 0
+            ? ctx.moveTo(Math.cos(a)*rv, Math.sin(a)*rv)
+            : ctx.lineTo(Math.cos(a)*rv, Math.sin(a)*rv);
+        }
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+        break;
+      }
+
+      default: {
+        ctx.beginPath();
+        ctx.arc(0, 0, p.r, 0, Math.PI*2);
+        ctx.fill(); ctx.stroke();
+        break;
+      }
+    }
+    ctx.restore();
+  }
+
+  // ── Subtle vignette to frame the cross-section
+  const vgr = ctx.createRadialGradient(W/2, H/2, W*0.30, W/2, H/2, W*0.72);
+  vgr.addColorStop(0, 'rgba(0,0,0,0)');
+  vgr.addColorStop(1, 'rgba(0,0,0,0.18)');
+  ctx.fillStyle = vgr;
+  ctx.fillRect(0, 0, W, H);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// TABLE  (display order I → A)
+// ═══════════════════════════════════════════════════════════════════
+function buildTable() {
+  const tb = document.getElementById('tbody');
+  tb.innerHTML = '';
+  DISPLAY_ORDER.forEach(id => {
+    const g   = ING_MAP[id];
+    const isN = g.shape === 'needle';
+    const isC = g.shape === 'cubic';
+    const cR  = isC ? '2px' : isN ? '1px' : '50%';
+    const cW  = isN ? '18px' : '12px';
+    const cH  = isN ? '5px'  : '12px';
+    const tr  = document.createElement('tr');
+    tr.innerHTML = `
+      <td><b>${g.id}</b></td>
+      <td style="font-size:.74rem;color:#6b7280;white-space:nowrap">${g.dv50}</td>
+      <td><div class="ing-label">
+        <div class="nchip" style="background:${g.color};border-radius:${cR};width:${cW};height:${cH}"></div>
+        ${g.name}
+      </div></td>
+      <td><div class="cinput">
+        <input type="range"  id="r_${g.id}" min="${g.min}" max="${g.max}" step="0.5" value="${S[g.id]}"
+               oninput="upd('${g.id}',this.value)">
+        <input type="number" id="n_${g.id}" min="${g.min}" max="${g.max}" step="0.5" value="${S[g.id]}"
+               oninput="upd('${g.id}',this.value)">
+        <span class="pct-lbl">%</span>
+      </div></td>
+      <td style="font-size:.75rem;color:#6b7280">${g.morph}</td>
+    `;
+    tb.appendChild(tr);
+  });
+  // Fat row
+  const ftr = document.createElement('tr');
+  ftr.className = 'fat-row';
+  ftr.innerHTML = `
+    <td>—</td>
+    <td style="font-size:.72rem;color:#aaa">—</td>
+    <td><div class="ing-label">
+      <div class="nchip" style="background:${FAT_COLOR};border-radius:50%;width:12px;height:12px;border:1px solid #c8b890"></div>
+      Fat (balance)
+    </div></td>
+    <td colspan="2"><span id="fatval" style="font-size:.82rem">—</span> <span class="pct-lbl">%</span></td>
+  `;
+  tb.appendChild(ftr);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// LEGEND  (I → A)
+// ═══════════════════════════════════════════════════════════════════
+function buildLegend() {
+  const lgd = document.getElementById('lgd');
+  lgd.innerHTML = '';
+  DISPLAY_ORDER.forEach(id => {
+    const g   = ING_MAP[id];
+    const isN = g.shape === 'needle';
+    const isC = g.shape === 'cubic';
+    const d   = document.createElement('div');
+    d.className = 'li';
+    d.innerHTML = `
+      <div class="lchip" style="
+        background:${g.color};
+        border-radius:${isC?'2px':isN?'1px':'50%'};
+        width:${isN?'18px':'13px'};
+        height:${isN?'5px':'13px'}">
+      </div>
+      ${g.id}: ${g.name}`;
+    lgd.appendChild(d);
+  });
+  const fd = document.createElement('div');
+  fd.className = 'li';
+  fd.innerHTML = `<div class="lchip" style="background:${FAT_COLOR};border-radius:50%;width:13px;height:13px;border:1px solid #c8b890"></div>Fat (balance)`;
+  lgd.appendChild(fd);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// DASHBOARD UPDATE
+// ═══════════════════════════════════════════════════════════════════
+function update() {
+  let tot = 0;
+  INGS.forEach(g => tot += Math.max(0, parseFloat(S[g.id])||0));
+  const fat = Math.max(0, 100 - tot);
+  document.getElementById('fatval').textContent = fat.toFixed(1);
+
+  const totbar  = document.getElementById('totbar');
+  document.getElementById('totpct').textContent = (tot+fat).toFixed(1)+'%';
+  if (tot > 100) {
+    totbar.className = 'tot-row warn';
+    document.getElementById('totstatus').textContent = '✗ Exceeds 100%';
+  } else {
+    totbar.className = 'tot-row ok';
+    document.getElementById('totstatus').textContent = '✓ Valid';
+  }
+
+  const vf    = vfModel(S);
+  const vfPct = vf * 100;
+  const vfEl  = document.getElementById('vfnum');
+  vfEl.innerHTML    = `${vfPct.toFixed(1)}<span class="unit">%</span>`;
+  vfEl.style.color  = vfPct<28?'#dc2626':vfPct>38?'#7c3aed':'#1a202c';
+  const barW = Math.max(0,Math.min(100,(vf-0.20)/0.25*100));
+  document.getElementById('vffill').style.width = barW+'%';
+  document.getElementById('oor').style.display = isOOR(S)?'block':'none';
+
+  buildCompBar();
+  scheduleRedraw();
+}
+
+function upd(id, val) {
+  S[id] = parseFloat(val)||0;
+  const r=document.getElementById('r_'+id), n=document.getElementById('n_'+id);
+  if(r)r.value=S[id]; if(n)n.value=S[id];
+  update();
+}
+function resetAll() {
+  INGS.forEach(g=>{
+    S[g.id]=g.def;
+    const r=document.getElementById('r_'+g.id),n=document.getElementById('n_'+g.id);
+    if(r)r.value=g.def; if(n)n.value=g.def;
+  });
+  update();
+}
+
+// ── INIT
+initCanvas();
+buildTable();
+buildLegend();
+update();
+</script>
+</body>
+</html>
