@@ -10,16 +10,16 @@
   <style>
     /* ── TOKENS ──────────────────────────────────── */
     :root {
-      --navy:        #0f172a;   /* headings, hero bg, footer */
-      --navy-700:    #1e3a5f;   /* slightly lighter navy */
-      --blue:        #0ea5e9;   /* primary accent */
-      --blue-dark:   #0284c7;
-      --blue-light:  #e0f2fe;   /* tint for chips */
-      --body:        #334155;   /* body text */
-      --muted:       #64748b;   /* secondary text */
-      --border:      #e2e8f0;
+      --navy:        #1a2010;   /* deep olive-dark — headings, footer */
+      --navy-700:    #2d3b16;   /* slightly lighter olive */
+      --blue:        #d97706;   /* amber/golden — primary accent */
+      --blue-dark:   #b45309;   /* deeper amber */
+      --blue-light:  #fef3c7;   /* soft amber tint for chips */
+      --body:        #374151;   /* body text */
+      --muted:       #6b7280;   /* secondary text */
+      --border:      #e5e7eb;
       --bg:          #ffffff;
-      --bg-alt:      #f8fafc;
+      --bg-alt:      #fafaf7;   /* warm off-white */
       --radius:      12px;
       --shadow-sm:   0 1px 4px rgba(0,0,0,0.06);
       --shadow:      0 4px 16px rgba(0,0,0,0.08);
@@ -191,7 +191,7 @@
     }
 
     /* ── ABOUT ───────────────────────────────────── */
-    #about { background:var(--bg-alt); }
+    #about { background:var(--bg-alt); padding-top: 80px; }
 
     .about-grid {
       display:grid; grid-template-columns:220px 1fr;
@@ -361,7 +361,7 @@
       font-size:.875rem; font-weight:600;
       transition:all .22s;
     }
-    .contact-link:hover { background:rgba(14,165,233,.18); border-color:var(--blue); transform:translateY(-2px); }
+    .contact-link:hover { background:rgba(217,119,6,.15); border-color:var(--blue); transform:translateY(-2px); }
 
     /* ── FOOTER ──────────────────────────────────── */
     footer {
@@ -386,7 +386,7 @@
 
 <!-- ══════════════ NAVBAR ══════════════ -->
 <nav id="navbar">
-  <a class="nav-brand" href="#home">Windy<span>.</span>Yeh</a>
+  <a class="nav-brand" href="#about">Windy<span>.</span>Yeh</a>
   <div class="nav-right">
     <ul class="nav-links">
       <li><a href="#about"><span class="en">About</span><span class="zh">關於我</span></a></li>
@@ -400,44 +400,6 @@
     </button>
   </div>
 </nav>
-
-<!-- ══════════════ HERO ══════════════ -->
-<section class="hero" id="home">
-  <div class="hero-content">
-    <div class="hero-chip">
-      🎓&nbsp;
-      <span class="en">MSc Food Technology · Wageningen University &amp; Research</span>
-      <span class="zh">食品技術碩士 · 瓦赫寧恩研究大學</span>
-    </div>
-
-    <h1>
-      <span class="en">Ting Yu <span class="accent">(Windy)</span> Yeh</span>
-      <span class="zh">葉庭妤 <span class="accent">Windy</span></span>
-    </h1>
-
-    <p class="hero-sub">
-      <span class="en">Data-Driven Food Scientist<span class="sep">·</span>ML &amp; Statistical Modeling<span class="sep">·</span>Food Systems Innovation</span>
-      <span class="zh">資料科學家<span class="sep">·</span>機器學習 &amp; 統計建模<span class="sep">·</span>食品系統創新</span>
-    </p>
-
-    <div class="hero-cta">
-      <a href="#projects" class="btn btn-primary">
-        <span class="en">View Projects</span><span class="zh">查看專案</span>
-      </a>
-      <a href="https://smartpack-finder.streamlit.app" target="_blank" rel="noopener" class="btn btn-outline-white">
-        🚀&nbsp;<span class="en">Streamlit Demo</span><span class="zh">即時演示</span>
-      </a>
-      <a href="#contact" class="btn btn-outline-white">
-        <span class="en">Get in Touch</span><span class="zh">聯絡我</span>
-      </a>
-    </div>
-  </div>
-
-  <div class="scroll-cue">
-    <div class="chevron"></div>
-    <span class="en">scroll</span><span class="zh">向下</span>
-  </div>
-</section>
 
 <!-- ══════════════ ABOUT ══════════════ -->
 <section id="about">
